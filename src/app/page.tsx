@@ -1,5 +1,7 @@
+import { Suspense } from 'react';
 import { Header } from '@/components/layout/Header';
 import { JoinCreateForm } from '@/components/team/JoinCreateForm';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function LandingPage() {
   return (
@@ -45,7 +47,21 @@ export default function LandingPage() {
         </section>
 
         {/* Join / Create */}
-        <JoinCreateForm />
+        <Suspense fallback={
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {[0, 1].map(i => (
+              <div key={i} className="bg-white rounded-2xl p-6 border border-surface-border shadow-sm space-y-4">
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-12 w-full rounded-xl" />
+                <Skeleton className="h-12 w-full rounded-xl" />
+                <Skeleton className="h-12 w-full rounded-xl" />
+              </div>
+            ))}
+          </div>
+        }>
+          <JoinCreateForm />
+        </Suspense>
 
         {/* Footer */}
         <footer className="text-center pb-8">

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
+import useSWR from 'swr';
 import { Header } from '@/components/layout/Header';
 import { PageWrapper } from '@/components/layout/PageWrapper';
 import { BoardGrid } from '@/components/standup/BoardGrid';
@@ -11,8 +12,9 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { StandupForm } from '@/components/standup/StandupForm';
 import { useTeamBoard } from '@/hooks/useTeamBoard';
 import { useMember } from '@/hooks/useMember';
-import { formatDateLabel } from '@/lib/utils';
-import { cn } from '@/lib/utils';
+import { formatDateLabel, cn } from '@/lib/utils';
+import type { ApiResponse } from '@/types/api';
+import type { ITeam } from '@/types/team';
 
 export default function TeamBoardPage() {
   const params = useParams();
@@ -26,7 +28,12 @@ export default function TeamBoardPage() {
     ? board?.submitted.some(s => s.member_id === member.id) ?? false
     : false;
 
-  const teamName = ''; // fetched via separate call if needed — board doesn't include it
+  // Fetch team name for the header
+  const { data: teamData } = useSWR<ApiResponse<ITeam>>(
+    code ? `/api/teams/${code}` : null,
+    (url: string) => fetch(url).then(r => r.json()) as Promise<ApiResponse<ITeam>>
+  );
+  const teamName = teamData?.success ? teamData.data.name : undefined;
 
   return (
     <div className="dot-grid min-h-screen">
