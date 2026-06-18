@@ -1,29 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
-import { standupSchema } from '@/validators/standup.schema';
+import { standupFormSchema } from '@/validators/standup.schema';
 import { getPHTDateString } from '@/lib/utils';
+import { getSessionUser, assertTeamMember } from '@/lib/auth';
 import type { ApiResponse } from '@/types/api';
 import type { IStandup } from '@/types/standup';
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json<ApiResponse<never>>(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json() as unknown;
-    const parsed = standupSchema.safeParse(body);
+    const parsed = standupFormSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json<ApiResponse<never>>(
         { success: false, error: 'Invalid input', details: parsed.error.flatten() },
         { status: 400 }
       );
     }
-    const { mood, finished, today, blocker, memberName, teamCode, memberId } = parsed.data;
-    const db = createServerClient();
+    const { mood, finished, today, blocker, teamCode } = parsed.data;
+
+    const membership = await assertTeamMember(user.id, teamCode);
+    if (!membership) {
+      return NextResponse.json<ApiResponse<never>>(
+        { success: false, error: 'You are not a member of this team' },
+        { status: 403 }
+      );
+    }
+
+    const { member } = membership;
+    const db = await createServerClient();
     const date = getPHTDateString();
 
-    // Check for duplicate submission (one standup per member per day)
     const { data: existing } = await db
       .from('standups')
       .select('id')
-      .eq('member_id', memberId)
+      .eq('member_id', member.id)
       .eq('date', date)
       .maybeSingle();
 
@@ -34,26 +52,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get team id from code
-    const { data: team } = await db
-      .from('teams')
-      .select('id')
-      .eq('code', teamCode.toUpperCase())
-      .maybeSingle();
-
-    if (!team) {
-      return NextResponse.json<ApiResponse<never>>(
-        { success: false, error: 'Team not found' },
-        { status: 404 }
-      );
-    }
-
     const { data: standup, error } = await db
       .from('standups')
       .insert({
-        team_id: team.id,
-        member_id: memberId,
-        member_name: memberName,
+        team_id: membership.team.id,
+        member_id: member.id,
+        member_name: member.name,
         mood: mood ?? null,
         finished,
         today,
@@ -71,7 +75,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json<ApiResponse<IStandup>>(
-      { success: true, data: standup },
+      { success: true, data: standup as IStandup },
       { status: 201 }
     );
   } catch (err) {

@@ -11,7 +11,7 @@ import { LoadingGrid } from '@/components/shared/LoadingGrid';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { StandupForm } from '@/components/standup/StandupForm';
 import { useTeamBoard } from '@/hooks/useTeamBoard';
-import { useMember } from '@/hooks/useMember';
+import { useTeamMember } from '@/hooks/useTeamMember';
 import { formatDateLabel, cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types/api';
 import type { ITeam } from '@/types/team';
@@ -20,15 +20,13 @@ export default function TeamBoardPage() {
   const params = useParams();
   const code = typeof params.code === 'string' ? params.code.toUpperCase() : '';
   const { board, isLoading, error, refresh } = useTeamBoard(code);
-  const { member } = useMember();
+  const { member, isLoading: memberLoading } = useTeamMember(code);
   const [formOpen, setFormOpen] = useState(false);
 
-  // Check if current member has already submitted today
   const hasSubmitted = member
     ? board?.submitted.some(s => s.member_id === member.id) ?? false
     : false;
 
-  // Fetch team name for the header
   const { data: teamData } = useSWR<ApiResponse<ITeam>>(
     code ? `/api/teams/${code}` : null,
     (url: string) => fetch(url).then(r => r.json()) as Promise<ApiResponse<ITeam>>
@@ -40,7 +38,6 @@ export default function TeamBoardPage() {
       <Header teamCode={code} teamName={teamName || undefined} />
 
       <PageWrapper>
-        {/* Pill navigation */}
         <nav className="flex gap-2 p-1 bg-surface-subtle rounded-xl w-fit mb-6" aria-label="Team navigation">
           <Link
             href={`/team/${code}`}
@@ -66,7 +63,6 @@ export default function TeamBoardPage() {
           </Link>
         </nav>
 
-        {/* Date label */}
         {board && (
           <p className="text-xs text-ink-muted mb-4">
             {formatDateLabel(board.date)} · {board.submitted.length} checked in
@@ -74,8 +70,7 @@ export default function TeamBoardPage() {
           </p>
         )}
 
-        {/* Check-in CTA */}
-        {member && !hasSubmitted && !isLoading && (
+        {member && !hasSubmitted && !isLoading && !memberLoading && (
           <button
             id="checkin-cta"
             onClick={() => setFormOpen(true)}
@@ -98,18 +93,6 @@ export default function TeamBoardPage() {
           </div>
         )}
 
-        {!member && !isLoading && (
-          <div className="mb-6 p-4 bg-brand-light rounded-xl border border-brand/20">
-            <p className="text-sm text-ink-soft">
-              <Link href="/" className="text-brand font-semibold hover:underline">
-                Join this team
-              </Link>{' '}
-              to submit your standup.
-            </p>
-          </div>
-        )}
-
-        {/* Board content */}
         {isLoading && <LoadingGrid />}
         {error && !isLoading && (
           <EmptyState
@@ -120,13 +103,10 @@ export default function TeamBoardPage() {
         {board && !isLoading && <BoardGrid board={board} />}
       </PageWrapper>
 
-      {/* Standup form dialog */}
       {member && (
         <StandupForm
           open={formOpen}
           onOpenChange={setFormOpen}
-          memberName={member.name}
-          memberId={member.id}
           teamCode={code}
           onSuccess={() => refresh()}
         />

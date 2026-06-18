@@ -2,11 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 import { generateTeamCode } from '@/lib/utils';
 import { createTeamSchema } from '@/validators/team.schema';
+import { getSessionUser } from '@/lib/auth';
 import type { ApiResponse } from '@/types/api';
 import type { ITeam, IMember } from '@/types/team';
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json<ApiResponse<never>>(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json() as unknown;
     const parsed = createTeamSchema.safeParse(body);
     if (!parsed.success) {
@@ -16,9 +25,8 @@ export async function POST(req: NextRequest) {
       );
     }
     const { teamName, memberName } = parsed.data;
-    const db = createServerClient();
+    const db = await createServerClient();
 
-    // Generate unique code (retry on collision)
     let code = generateTeamCode();
     let attempts = 0;
     while (attempts < 5) {
@@ -28,7 +36,6 @@ export async function POST(req: NextRequest) {
       attempts++;
     }
 
-    // Create team
     const { data: team, error: teamErr } = await db
       .from('teams')
       .insert({ name: teamName, code })
@@ -42,10 +49,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create first member
     const { data: member, error: memberErr } = await db
       .from('members')
-      .insert({ team_id: team.id, name: memberName })
+      .insert({ team_id: team.id, name: memberName, user_id: user.id })
       .select()
       .single();
 
@@ -57,7 +63,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json<ApiResponse<{ team: ITeam; member: IMember }>>(
-      { success: true, data: { team, member } },
+      { success: true, data: { team: team as ITeam, member: member as IMember } },
       { status: 201 }
     );
   } catch (err) {

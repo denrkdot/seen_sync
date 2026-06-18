@@ -9,7 +9,7 @@ Every decision must be traceable to this document or `frontend_styling.md`.
 ## 0. Project Context
 
 **Standup** is an async daily standup tool for small professional teams.
-No accounts. No meetings. No friction.
+Sign in once, join teams with a short code, and check in daily from a single dashboard.
 
 A team joins with a short code. Each member answers four inputs once a day:
 1. How are you coming in today? *(mood — one emoji, optional)*
@@ -69,7 +69,7 @@ comments and ask.
 | Language | TypeScript (strict mode) | No `any` |
 | Styling | Tailwind CSS + shadcn/ui | Follow `frontend_styling.md` |
 | Database | Supabase (PostgreSQL) | Hosted Postgres, no local instance |
-| Auth | None (team code + localStorage) | No login system |
+| Auth | Supabase Auth (email + password) | Session via `@supabase/ssr` cookies |
 | Validation | Zod | All API inputs and form data |
 | Forms | React Hook Form + Zod resolver | Client forms only |
 | Data fetching | SWR | Client-side polling for live board |
@@ -152,7 +152,8 @@ seen_sync/
     ├── hooks/
     │   ├── useTeamBoard.ts             ← SWR polling for board
     │   ├── useBlockers.ts              ← SWR for blockers feed
-    │   └── useMember.ts               ← localStorage identity
+    │   ├── useAuth.ts                  ← Supabase session state
+    │   └── useTeamMember.ts            ← Current user's member for a team
     │
     ├── lib/
     │   ├── supabase.ts                 ← Supabase client (server + browser)
@@ -226,9 +227,9 @@ Reject invalid input with 400 + Zod error message. Never trust `req.body`.
 
 ### 6.1 Always use the server client for API routes
 ```ts
-// lib/supabase.ts exports two clients:
-// - createServerClient() → for API routes and server components
-// - createBrowserClient() → for client components (SWR hooks)
+// lib/supabase.ts exports:
+// - createBrowserSupabaseClient() → for client components (auth forms, hooks)
+// - createServerClient() → for API routes and server components (cookie session)
 ```
 
 ### 6.2 Date scoping
@@ -245,7 +246,7 @@ Run `npx supabase gen types typescript` after schema changes to keep
 
 ### 6.5 RLS (Row Level Security)
 For this MVP, RLS is disabled on all tables. Security is handled at the
-API route level via team code validation. Note this in comments.
+API route level via Supabase Auth session validation and team membership checks.
 
 ---
 
@@ -358,7 +359,6 @@ Types: `feat` `fix` `chore` `style` `refactor` `docs` `test`
 
 ## 11. Scope Guard — Do Not Build
 
-- User authentication or login
 - Email or push notifications
 - Rich text editor
 - File uploads

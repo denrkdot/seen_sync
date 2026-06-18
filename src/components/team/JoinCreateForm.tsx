@@ -4,10 +4,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { mutate } from 'swr';
 import { createTeamSchema, joinTeamSchema } from '@/validators/team.schema';
 import type { CreateTeamInput, JoinTeamInput } from '@/validators/team.schema';
 import { cn } from '@/lib/utils';
-import { useMember } from '@/hooks/useMember';
 import type { IMember } from '@/types/team';
 
 function FieldError({ message }: { message?: string }) {
@@ -25,20 +25,33 @@ const inputClass = cn(
 
 const btnClass = cn(
   'w-full bg-brand hover:bg-brand-dark text-white',
-  'px-5 py-3 rounded-xl text-sm font-semibold',
+  'px-5 py-2.5 rounded-xl text-sm font-semibold',
   'focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2',
   'transition-colors duration-150',
   'disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]'
 );
 
-export function JoinCreateForm() {
+interface JoinCreateFormProps {
+  defaultMemberName?: string;
+  onSuccess?: () => void;
+  compact?: boolean;
+}
+
+export function JoinCreateForm({ defaultMemberName = '', onSuccess, compact = false }: JoinCreateFormProps) {
   const router = useRouter();
-  const { saveMember } = useMember();
   const [joinLoading, setJoinLoading] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
 
-  const joinForm = useForm<JoinTeamInput>({ resolver: zodResolver(joinTeamSchema) });
-  const createForm = useForm<CreateTeamInput>({ resolver: zodResolver(createTeamSchema) });
+  const joinForm = useForm<JoinTeamInput>({
+    resolver: zodResolver(joinTeamSchema),
+    defaultValues: { memberName: defaultMemberName },
+  });
+  const createForm = useForm<CreateTeamInput>({
+    resolver: zodResolver(createTeamSchema),
+    defaultValues: { memberName: defaultMemberName },
+  });
+
+  const invalidateTeams = () => void mutate('/api/users/teams');
 
   const handleJoin = async (data: JoinTeamInput) => {
     setJoinLoading(true);
@@ -49,11 +62,20 @@ export function JoinCreateForm() {
         body: JSON.stringify(data),
       });
       const json = await res.json() as { success: boolean; data?: IMember; error?: string };
+      if (res.status === 409) {
+        toast.info("You're already on this team");
+        invalidateTeams();
+        onSuccess?.();
+        router.push(`/team/${data.code.toUpperCase()}`);
+        return;
+      }
       if (!json.success || !json.data) {
         toast.error(json.error ?? 'Could not join team');
         return;
       }
-      saveMember(json.data);
+      toast.success(`Joined team ${data.code.toUpperCase()}!`);
+      invalidateTeams();
+      onSuccess?.();
       router.push(`/team/${data.code.toUpperCase()}`);
     } catch {
       toast.error('Network error — please try again');
@@ -79,7 +101,9 @@ export function JoinCreateForm() {
         toast.error(json.error ?? 'Could not create team');
         return;
       }
-      saveMember(json.data.member);
+      toast.success('Team created!');
+      invalidateTeams();
+      onSuccess?.();
       router.push(`/team/${json.data.team.code}`);
     } catch {
       toast.error('Network error — please try again');
@@ -88,10 +112,13 @@ export function JoinCreateForm() {
     }
   };
 
+  const gridClass = compact
+    ? 'space-y-6'
+    : 'grid grid-cols-1 sm:grid-cols-2 gap-6';
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-      {/* Join a team */}
-      <div className="bg-white rounded-2xl p-6 border border-surface-border shadow-sm">
+    <div className={gridClass}>
+      <div className={cn(!compact && 'bg-white rounded-2xl p-6 border border-surface-border shadow-sm')}>
         <h2 className="text-xl font-semibold tracking-tight text-ink mb-1">Join a team</h2>
         <p className="text-sm text-ink-muted mb-5">Have a team code? Jump right in.</p>
 
@@ -136,8 +163,7 @@ export function JoinCreateForm() {
         </form>
       </div>
 
-      {/* Create a team */}
-      <div className="bg-white rounded-2xl p-6 border border-surface-border shadow-sm">
+      <div className={cn(!compact && 'bg-white rounded-2xl p-6 border border-surface-border shadow-sm')}>
         <h2 className="text-xl font-semibold tracking-tight text-ink mb-1">Create a team</h2>
         <p className="text-sm text-ink-muted mb-5">Start fresh. Your team code is generated automatically.</p>
 

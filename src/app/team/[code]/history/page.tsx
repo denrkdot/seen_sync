@@ -8,31 +8,18 @@ import { PageWrapper } from '@/components/layout/PageWrapper';
 import { BoardGrid } from '@/components/standup/BoardGrid';
 import { LoadingGrid } from '@/components/shared/LoadingGrid';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { formatDateLabel, getPHTDateString } from '@/lib/utils';
+import { formatDateLabel, getPHTDateList, cn } from '@/lib/utils';
 import { HISTORY_DAYS } from '@/lib/constants';
-import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types/api';
 import type { IStandup } from '@/types/standup';
 import type { IMember } from '@/types/team';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json()) as Promise<ApiResponse<IStandup[]>>;
 
-// Build last N date strings in PHT
-function buildDateList(n: number): string[] {
-  const today = getPHTDateString();
-  const dates: string[] = [];
-  for (let i = 0; i < n; i++) {
-    const d = new Date(today + 'T00:00:00+08:00');
-    d.setDate(d.getDate() - i);
-    dates.push(d.toISOString().split('T')[0]);
-  }
-  return dates;
-}
-
 export default function HistoryPage() {
   const params = useParams();
   const code = typeof params.code === 'string' ? params.code.toUpperCase() : '';
-  const dates = buildDateList(HISTORY_DAYS);
+  const dates = getPHTDateList(HISTORY_DAYS);
   const [selectedDate, setSelectedDate] = useState(dates[1] ?? dates[0]); // default to yesterday
 
   const { data, isLoading, error } = useSWR<ApiResponse<IStandup[]>>(

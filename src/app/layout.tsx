@@ -6,7 +6,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Standup — No meetings. Just momentum.',
-  description: 'Async daily standups for small teams. No accounts. No meetings.',
+  description: 'Async daily standups for small teams. Sign in once, join your teams, check in daily.',
   icons: {
     icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>",
   },

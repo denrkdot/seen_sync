@@ -1,15 +1,20 @@
-import { Suspense } from 'react';
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { Header } from '@/components/layout/Header';
-import { JoinCreateForm } from '@/components/team/JoinCreateForm';
-import { Skeleton } from '@/components/ui/skeleton';
+import { getSessionUser } from '@/lib/auth';
+import { cn } from '@/lib/utils';
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const user = await getSessionUser();
+  if (user) {
+    redirect('/dashboard');
+  }
+
   return (
     <div className="min-h-screen bg-surface-subtle">
       <Header />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* Hero */}
         <section className="relative bg-brand-light overflow-hidden rounded-2xl p-8 sm:p-12 noise">
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-6">
@@ -43,30 +48,38 @@ export default function LandingPage() {
                 </span>
               ))}
             </div>
+
+            <div className="mt-8 flex flex-col sm:flex-row gap-3">
+              <Link
+                href="/signup"
+                className={cn(
+                  'inline-flex items-center justify-center',
+                  'bg-brand hover:bg-brand-dark text-white',
+                  'px-5 py-2.5 rounded-xl text-sm font-semibold',
+                  'focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2',
+                  'transition-colors duration-150 min-h-[44px]'
+                )}
+              >
+                Get started
+              </Link>
+              <Link
+                href="/login"
+                className={cn(
+                  'inline-flex items-center justify-center',
+                  'bg-transparent border border-surface-border text-ink',
+                  'px-5 py-2.5 rounded-xl text-sm font-medium',
+                  'hover:bg-surface-hover transition-colors duration-150 min-h-[44px]'
+                )}
+              >
+                Sign in
+              </Link>
+            </div>
           </div>
         </section>
 
-        {/* Join / Create */}
-        <Suspense fallback={
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {[0, 1].map(i => (
-              <div key={i} className="bg-white rounded-2xl p-6 border border-surface-border shadow-sm space-y-4">
-                <Skeleton className="h-6 w-32" />
-                <Skeleton className="h-4 w-48" />
-                <Skeleton className="h-12 w-full rounded-xl" />
-                <Skeleton className="h-12 w-full rounded-xl" />
-                <Skeleton className="h-12 w-full rounded-xl" />
-              </div>
-            ))}
-          </div>
-        }>
-          <JoinCreateForm />
-        </Suspense>
-
-        {/* Footer */}
         <footer className="text-center pb-8">
           <p className="text-xs text-ink-faint">
-            No accounts. No meetings. No friction.
+            Your teams, one dashboard. Check in once a day.
           </p>
         </footer>
       </div>

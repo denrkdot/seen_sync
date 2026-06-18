@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase';
 import { getSessionUser, assertTeamMember } from '@/lib/auth';
 import type { ApiResponse } from '@/types/api';
-import type { ITeamWithMembers } from '@/types/team';
+import type { IMember } from '@/types/team';
 
 export async function GET(
   _req: NextRequest,
@@ -17,34 +16,20 @@ export async function GET(
       );
     }
 
-    const membership = await assertTeamMember(user.id, params.code);
-    if (!membership) {
+    const result = await assertTeamMember(user.id, params.code);
+    if (!result) {
       return NextResponse.json<ApiResponse<never>>(
         { success: false, error: 'You are not a member of this team' },
         { status: 403 }
       );
     }
 
-    const db = await createServerClient();
-    const { data: team, error } = await db
-      .from('teams')
-      .select('*, members(*)')
-      .eq('code', params.code.toUpperCase())
-      .single();
-
-    if (error || !team) {
-      return NextResponse.json<ApiResponse<never>>(
-        { success: false, error: 'Team not found' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json<ApiResponse<ITeamWithMembers>>({
+    return NextResponse.json<ApiResponse<IMember>>({
       success: true,
-      data: team as ITeamWithMembers,
+      data: result.member,
     });
   } catch (err) {
-    console.error('[GET /api/teams/:code]', err);
+    console.error('[GET /api/teams/:code/member]', err);
     return NextResponse.json<ApiResponse<never>>(
       { success: false, error: 'Server error' },
       { status: 500 }

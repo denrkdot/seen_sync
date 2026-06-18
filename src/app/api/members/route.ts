@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 import { joinTeamSchema } from '@/validators/team.schema';
+import { getSessionUser } from '@/lib/auth';
 import type { ApiResponse } from '@/types/api';
 import type { IMember } from '@/types/team';
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json<ApiResponse<never>>(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json() as unknown;
     const parsed = joinTeamSchema.safeParse(body);
     if (!parsed.success) {
@@ -15,7 +24,7 @@ export async function POST(req: NextRequest) {
       );
     }
     const { code, memberName } = parsed.data;
-    const db = createServerClient();
+    const db = await createServerClient();
 
     const { data: team } = await db
       .from('teams')
@@ -30,9 +39,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const { data: existing } = await db
+      .from('members')
+      .select('id')
+      .eq('team_id', team.id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (existing) {
+      return NextResponse.json<ApiResponse<never>>(
+        { success: false, error: "You're already on this team" },
+        { status: 409 }
+      );
+    }
+
     const { data: member, error } = await db
       .from('members')
-      .insert({ team_id: team.id, name: memberName })
+      .insert({ team_id: team.id, name: memberName, user_id: user.id })
       .select()
       .single();
 
@@ -44,7 +67,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json<ApiResponse<IMember>>(
-      { success: true, data: member },
+      { success: true, data: member as IMember },
       { status: 201 }
     );
   } catch (err) {
