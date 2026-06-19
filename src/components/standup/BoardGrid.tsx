@@ -1,9 +1,11 @@
 'use client';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { StandupCard } from './StandupCard';
 import { PendingCard } from './PendingCard';
 import { EmptyState } from '@/components/shared/EmptyState';
 import type { BoardData } from '@/types/standup';
+import type { IStandup } from '@/types/standup';
 
 const containerVariants = {
   hidden: {},
@@ -17,12 +19,30 @@ const itemVariants = {
 
 interface BoardGridProps {
   board: BoardData;
+  currentMemberId?: string;
+  teamCode?: string;
+  onRefresh?: () => void;
 }
 
-export function BoardGrid({ board }: BoardGridProps) {
+export function BoardGrid({ board, currentMemberId, teamCode, onRefresh }: BoardGridProps) {
   const prefersReduced = useReducedMotion();
-  const { submitted, pending } = board;
-  const isEmpty = submitted.length === 0 && pending.length === 0;
+  const [localSubmitted, setLocalSubmitted] = useState<IStandup[]>(board.submitted);
+
+  // Sync local state when SWR refreshes the board (e.g., after a new member checks in)
+  useEffect(() => {
+    setLocalSubmitted(board.submitted);
+  }, [board.submitted]);
+
+  const handleUpdated = useCallback((updated: IStandup) => {
+    setLocalSubmitted(prev => prev.map(s => s.id === updated.id ? updated : s));
+  }, []);
+
+  const handleDeleted = useCallback((id: string) => {
+    setLocalSubmitted(prev => prev.filter(s => s.id !== id));
+    onRefresh?.();
+  }, [onRefresh]);
+
+  const isEmpty = localSubmitted.length === 0 && board.pending.length === 0;
 
   if (isEmpty) {
     return (
@@ -43,12 +63,18 @@ export function BoardGrid({ board }: BoardGridProps) {
       initial="hidden"
       animate="show"
     >
-      {submitted.map(standup => (
+      {localSubmitted.map(standup => (
         <motion.div key={standup.id} variants={itemV}>
-          <StandupCard standup={standup} />
+          <StandupCard
+            standup={standup}
+            currentMemberId={currentMemberId}
+            teamCode={teamCode}
+            onUpdated={handleUpdated}
+            onDeleted={handleDeleted}
+          />
         </motion.div>
       ))}
-      {pending.map(member => (
+      {board.pending.map(member => (
         <motion.div key={member.id} variants={itemV}>
           <PendingCard member={member} />
         </motion.div>
