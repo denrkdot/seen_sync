@@ -38,7 +38,7 @@ export default function HistoryPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-safe">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-6 pb-safe">
       <h1 className="text-xl font-semibold tracking-tight text-ink mb-4">Past standups</h1>
 
       {/* Date selector */}

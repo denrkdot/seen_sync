@@ -23,7 +23,7 @@ export default function TeamBoardPage() {
     : false;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-safe">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-6 pb-safe">
       {board && (
         <p className="text-xs text-ink-muted mb-4">
           {formatDateLabel(board.date)} · {board.submitted.length} checked in
@@ -67,6 +67,7 @@ export default function TeamBoardPage() {
           currentMemberId={member?.id}
           teamCode={code}
           onRefresh={() => void refresh()}
+          onCheckIn={() => setFormOpen(true)}
         />
       )}
 

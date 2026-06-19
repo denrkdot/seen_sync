@@ -28,24 +28,22 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="dot-grid min-h-screen">
-      {/* Persistent header — never unmounts on tab switch */}
+      {/* Navbar only — pure, no extra content */}
       <Header />
 
-      {/* Persistent team hero — team name + code */}
+      {/* Team hero (name + code + date) — part of page content, not navbar */}
       <TeamHero
         teamName={teamName}
         teamCode={code}
         dateLabel={todayLabel}
       />
 
-      {/* Persistent pill navigation */}
-      <div className="bg-white/60 backdrop-blur-sm border-b border-surface-border sticky top-14 z-30">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <TeamNav code={code} />
-        </div>
+      {/* Tab navigation — sits directly below hero in the content flow */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-2">
+        <TeamNav code={code} />
       </div>
 
-      {/* Animated page content — fades/slides on tab change */}
+      {/* Animated page content — only children animate on tab change */}
       <AnimatePresence mode="wait">
         <motion.div
           key={pathname}

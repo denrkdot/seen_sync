@@ -22,9 +22,10 @@ interface BoardGridProps {
   currentMemberId?: string;
   teamCode?: string;
   onRefresh?: () => void;
+  onCheckIn?: () => void;
 }
 
-export function BoardGrid({ board, currentMemberId, teamCode, onRefresh }: BoardGridProps) {
+export function BoardGrid({ board, currentMemberId, teamCode, onRefresh, onCheckIn }: BoardGridProps) {
   const prefersReduced = useReducedMotion();
   const [localSubmitted, setLocalSubmitted] = useState<IStandup[]>(board.submitted);
 
@@ -76,7 +77,11 @@ export function BoardGrid({ board, currentMemberId, teamCode, onRefresh }: Board
       ))}
       {board.pending.map(member => (
         <motion.div key={member.id} variants={itemV}>
-          <PendingCard member={member} />
+          <PendingCard
+            member={member}
+            currentMemberId={currentMemberId}
+            onCheckIn={onCheckIn}
+          />
         </motion.div>
       ))}
     </motion.div>

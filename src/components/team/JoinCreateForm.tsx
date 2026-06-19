@@ -118,11 +118,15 @@ export function JoinCreateForm({ defaultMemberName = '', onSuccess, compact = fa
 
   return (
     <div className={gridClass}>
+      {/* Join a team */}
       <div className={cn(!compact && 'bg-white rounded-2xl p-6 border border-surface-border shadow-sm')}>
         <h2 className="text-xl font-semibold tracking-tight text-ink mb-1">Join a team</h2>
         <p className="text-sm text-ink-muted mb-5">Have a team code? Jump right in.</p>
 
         <form onSubmit={joinForm.handleSubmit(handleJoin)} className="space-y-4" noValidate>
+          {/* memberName is submitted silently from profile — not shown to user */}
+          <input type="hidden" {...joinForm.register('memberName')} />
+
           <div>
             <label htmlFor="join-code" className="text-xs font-medium uppercase tracking-widest text-ink-muted block mb-1.5">
               Team code
@@ -143,19 +147,11 @@ export function JoinCreateForm({ defaultMemberName = '', onSuccess, compact = fa
             <FieldError message={joinForm.formState.errors.code?.message} />
           </div>
 
-          <div>
-            <label htmlFor="join-name" className="text-xs font-medium uppercase tracking-widest text-ink-muted block mb-1.5">
-              Your name
-            </label>
-            <input
-              id="join-name"
-              type="text"
-              placeholder="Alex Chen"
-              {...joinForm.register('memberName')}
-              className={cn(inputClass, joinForm.formState.errors.memberName && 'border-blocker')}
-            />
-            <FieldError message={joinForm.formState.errors.memberName?.message} />
-          </div>
+          {defaultMemberName && (
+            <p className="text-xs text-ink-muted">
+              Joining as <span className="font-semibold text-ink">{defaultMemberName}</span>
+            </p>
+          )}
 
           <button type="submit" disabled={joinLoading} id="join-submit" className={btnClass}>
             {joinLoading ? 'Joining…' : 'Join →'}
@@ -163,11 +159,15 @@ export function JoinCreateForm({ defaultMemberName = '', onSuccess, compact = fa
         </form>
       </div>
 
+      {/* Create a team */}
       <div className={cn(!compact && 'bg-white rounded-2xl p-6 border border-surface-border shadow-sm')}>
         <h2 className="text-xl font-semibold tracking-tight text-ink mb-1">Create a team</h2>
         <p className="text-sm text-ink-muted mb-5">Start fresh. Your team code is generated automatically.</p>
 
         <form onSubmit={createForm.handleSubmit(handleCreate)} className="space-y-4" noValidate>
+          {/* memberName is submitted silently from profile — not shown to user */}
+          <input type="hidden" {...createForm.register('memberName')} />
+
           <div>
             <label htmlFor="create-team-name" className="text-xs font-medium uppercase tracking-widest text-ink-muted block mb-1.5">
               Team name
@@ -182,19 +182,11 @@ export function JoinCreateForm({ defaultMemberName = '', onSuccess, compact = fa
             <FieldError message={createForm.formState.errors.teamName?.message} />
           </div>
 
-          <div>
-            <label htmlFor="create-member-name" className="text-xs font-medium uppercase tracking-widest text-ink-muted block mb-1.5">
-              Your name
-            </label>
-            <input
-              id="create-member-name"
-              type="text"
-              placeholder="Alex Chen"
-              {...createForm.register('memberName')}
-              className={cn(inputClass, createForm.formState.errors.memberName && 'border-blocker')}
-            />
-            <FieldError message={createForm.formState.errors.memberName?.message} />
-          </div>
+          {defaultMemberName && (
+            <p className="text-xs text-ink-muted">
+              Creating as <span className="font-semibold text-ink">{defaultMemberName}</span>
+            </p>
+          )}
 
           <button type="submit" disabled={createLoading} id="create-submit" className={btnClass}>
             {createLoading ? 'Creating…' : 'Create →'}

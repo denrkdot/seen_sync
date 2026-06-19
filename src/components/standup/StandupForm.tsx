@@ -70,7 +70,7 @@ export function StandupForm({
       <DialogContent
         variant="sheet"
         className={cn(
-          'w-full max-w-lg mx-auto p-6 pb-safe',
+          'w-full max-w-lg mx-auto p-6',
           'bg-white border border-surface-border shadow-md',
           'max-h-[90vh] overflow-y-auto'
         )}
