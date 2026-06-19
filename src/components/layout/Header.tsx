@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
@@ -16,10 +17,17 @@ export function Header() {
         <Link
           href={homeHref}
           id="header-logo"
-          className="text-xl font-bold tracking-tight hover:opacity-80 transition-opacity duration-150"
+          className="flex items-center gap-1.5 text-xl font-bold tracking-tight hover:opacity-80 transition-opacity duration-150"
           aria-label="Standup home"
         >
-          <span className="text-brand mr-1" aria-hidden="true">◈</span>
+          <Image
+            src="/logo.svg"
+            alt=""
+            width={20}
+            height={20}
+            className="w-5 h-5 object-contain"
+            priority
+          />
           <span className="text-ink">standup</span>
         </Link>
 
