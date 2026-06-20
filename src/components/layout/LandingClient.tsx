@@ -163,7 +163,7 @@ export function LandingClient() {
       />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16 space-y-16">
-        
+
         {/* HERO SECTION */}
         <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           {/* Hero text */}
@@ -195,7 +195,7 @@ export function LandingClient() {
               className="text-base sm:text-lg text-ink-soft leading-relaxed max-w-md"
             >
               Async standups for small teams. Three simple questions, once a day.
-              Keep everyone synced — no calendars, interruptions, or time-wasting meetings.
+              No calendars, interruptions, or time-wasting meetings. Everyone synced.
             </motion.p>
 
             {/* Interactive Floating Mood Row */}
@@ -292,7 +292,7 @@ export function LandingClient() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-              
+
               {/* Tab Navigation and Team Cards List */}
               <div className="md:col-span-7 space-y-4">
                 <div className="flex items-center justify-between">
@@ -624,7 +624,7 @@ export function LandingClient() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
+
             {/* Value card 1: Focus Calendar compare */}
             <div className="bg-white rounded-2xl border border-surface-border p-6 shadow-sm flex flex-col justify-between space-y-6 text-left">
               <div className="space-y-3">
@@ -636,7 +636,7 @@ export function LandingClient() {
                   Traditional sync meetings fragment focus. Standup lets you log updates in 2 minutes, preserving hours of uninterrupted deep work.
                 </p>
               </div>
-              
+
               {/* Visual mini-comparison */}
               <div className="border border-surface-border rounded-xl p-3 bg-surface-subtle/50 space-y-2">
                 <div className="flex items-center justify-between text-[10px] border-b border-surface-border pb-1.5">

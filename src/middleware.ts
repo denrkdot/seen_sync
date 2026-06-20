@@ -26,7 +26,12 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  // Use getSession() for instantaneous local JWT validation instead of a
+  // remote getUser() network round-trip on every navigation and prefetch.
+  // getUser() is still called inside protected server components (lib/auth.ts)
+  // for authoritative verification once the page actually renders.
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
   const { pathname } = request.nextUrl;
 
   const isProtected = PROTECTED_PREFIXES.some(prefix => pathname.startsWith(prefix));
@@ -51,6 +56,9 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Exclude static assets, images, and ALL /api/ routes.
+    // API routes handle their own auth via the server Supabase client,
+    // so intercepting them here only adds latency to SWR polling.
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

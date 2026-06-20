@@ -5,41 +5,47 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
-import { loginSchema, type LoginInput } from '@/validators/auth.schema';
+import { signupSchema, type SignupInput } from '@/validators/auth.schema';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 
-export default function LoginClient() {
+export default function SignupClient() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirect = searchParams.get('redirect') ?? '/dashboard';
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const supabase = createBrowserSupabaseClient();
 
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema),
+  const { register, handleSubmit, formState: { errors } } = useForm<SignupInput>({
+    resolver: zodResolver(signupSchema),
   });
 
-  const onSubmit = async (data: LoginInput) => {
+  const onSubmit = async (data: SignupInput) => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
+        options: {
+          data: { name: data.name },
+        },
       });
       if (error) {
         toast.error(error.message);
         return;
       }
-      toast.success('Welcome back!');
-      router.push(redirect);
-      router.refresh();
+      if (authData.session) {
+        toast.success('Account created! Welcome to Standup.');
+        router.push('/dashboard');
+        router.refresh();
+      } else {
+        toast.success('Check your email to confirm your account.');
+        router.push('/login');
+      }
     } catch {
       toast.error('Something went wrong — please try again');
     } finally {
@@ -54,32 +60,34 @@ export default function LoginClient() {
       {/* Drifting background blobs */}
       <motion.div
         animate={{
-          x: [0, 30, -10, 0],
-          y: [0, -20, 20, 0],
+          x: [0, -30, 10, 0],
+          y: [0, 20, -20, 0],
         }}
         transition={{
           duration: 12,
           repeat: Infinity,
           ease: 'easeInOut',
         }}
-        className="absolute top-24 left-10 sm:left-20 w-72 h-72 rounded-full bg-brand-light/40 blur-3xl -z-10 pointer-events-none"
+        className="absolute top-24 right-10 sm:right-20 w-72 h-72 rounded-full bg-brand-light/40 blur-3xl -z-10 pointer-events-none"
+        aria-hidden="true"
       />
       <motion.div
         animate={{
-          x: [0, -20, 30, 0],
-          y: [0, 30, -20, 0],
+          x: [0, 20, -30, 0],
+          y: [0, -30, 20, 0],
         }}
         transition={{
           duration: 15,
           repeat: Infinity,
           ease: 'easeInOut',
         }}
-        className="absolute bottom-16 right-10 sm:right-20 w-80 h-80 rounded-full bg-purple-100/40 blur-3xl -z-10 pointer-events-none"
+        className="absolute bottom-16 left-10 sm:left-20 w-80 h-80 rounded-full bg-purple-100/40 blur-3xl -z-10 pointer-events-none"
+        aria-hidden="true"
       />
 
       {/* Workspace Grid & Content Wrapper */}
       <div className="flex-1 dot-grid relative flex items-center justify-center py-12 px-4 sm:px-6">
-        <div className="absolute inset-0 bg-gradient-to-b from-surface-subtle via-transparent to-surface-subtle pointer-events-none -z-20" />
+        <div className="absolute inset-0 bg-gradient-to-b from-surface-subtle via-transparent to-surface-subtle pointer-events-none -z-20" aria-hidden="true" />
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -103,13 +111,48 @@ export default function LoginClient() {
                 priority
               />
             </motion.div>
-            <h1 className="text-xl font-bold tracking-tight text-ink">Welcome back</h1>
-            <p className="text-sm text-ink-muted mt-1">Let&apos;s see what&apos;s moving today.</p>
+            <h1 className="text-xl font-bold tracking-tight text-ink">Create account</h1>
+            <p className="text-sm text-ink-muted mt-1">Get started with async standups.</p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+            {/* Name field */}
             <div>
-              <label htmlFor="login-email" className="text-xs font-medium uppercase tracking-widest text-ink-muted block mb-1.5">
+              <label htmlFor="signup-name" className="text-xs font-medium uppercase tracking-widest text-ink-muted block mb-1.5">
+                Your name
+              </label>
+              <div className="relative">
+                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-faint w-5 h-5 flex items-center justify-center pointer-events-none" aria-hidden="true">
+                  <User size={16} />
+                </div>
+                <input
+                  id="signup-name"
+                  type="text"
+                  autoComplete="name"
+                  placeholder="Alex Chen"
+                  {...register('name')}
+                  className={cn(
+                    'w-full border border-surface-border rounded-xl',
+                    'pl-10 pr-4 py-3 text-base text-ink bg-white/50 backdrop-blur-sm',
+                    'placeholder:text-ink-faint',
+                    'focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand focus:bg-white',
+                    'transition-all duration-150 min-h-[44px]',
+                    errors.name && 'border-blocker focus:ring-blocker/20 focus:border-blocker'
+                  )}
+                  aria-invalid={!!errors.name}
+                  aria-describedby={errors.name ? 'signup-name-error' : undefined}
+                />
+              </div>
+              {errors.name && (
+                <p id="signup-name-error" role="alert" className="text-xs text-blocker mt-1">
+                  {errors.name.message}
+                </p>
+              )}
+            </div>
+
+            {/* Email field */}
+            <div>
+              <label htmlFor="signup-email" className="text-xs font-medium uppercase tracking-widest text-ink-muted block mb-1.5">
                 Email
               </label>
               <div className="relative">
@@ -117,13 +160,11 @@ export default function LoginClient() {
                   <Mail size={16} />
                 </div>
                 <input
-                  id="login-email"
+                  id="signup-email"
                   type="email"
                   autoComplete="email"
                   placeholder="you@company.com"
                   {...register('email')}
-                  aria-invalid={!!errors.email}
-                  aria-describedby={errors.email ? 'login-email-error' : undefined}
                   className={cn(
                     'w-full border border-surface-border rounded-xl',
                     'pl-10 pr-4 py-3 text-base text-ink bg-white/50 backdrop-blur-sm',
@@ -132,13 +173,20 @@ export default function LoginClient() {
                     'transition-all duration-150 min-h-[44px]',
                     errors.email && 'border-blocker focus:ring-blocker/20 focus:border-blocker'
                   )}
+                  aria-invalid={!!errors.email}
+                  aria-describedby={errors.email ? 'signup-email-error' : undefined}
                 />
               </div>
-              {errors.email && <p id="login-email-error" role="alert" className="text-xs text-blocker mt-1">{errors.email.message}</p>}
+              {errors.email && (
+                <p id="signup-email-error" role="alert" className="text-xs text-blocker mt-1">
+                  {errors.email.message}
+                </p>
+              )}
             </div>
 
+            {/* Password field */}
             <div>
-              <label htmlFor="login-password" className="text-xs font-medium uppercase tracking-widest text-ink-muted block mb-1.5">
+              <label htmlFor="signup-password" className="text-xs font-medium uppercase tracking-widest text-ink-muted block mb-1.5">
                 Password
               </label>
               <div className="relative">
@@ -146,13 +194,11 @@ export default function LoginClient() {
                   <Lock size={16} />
                 </div>
                 <input
-                  id="login-password"
+                  id="signup-password"
                   type={showPassword ? 'text' : 'password'}
-                  autoComplete="current-password"
-                  placeholder="••••••••"
+                  autoComplete="new-password"
+                  placeholder="At least 6 characters"
                   {...register('password')}
-                  aria-invalid={!!errors.password}
-                  aria-describedby={errors.password ? 'login-password-error' : undefined}
                   className={cn(
                     'w-full border border-surface-border rounded-xl',
                     'pl-10 pr-10 py-3 text-base text-ink bg-white/50 backdrop-blur-sm',
@@ -161,6 +207,8 @@ export default function LoginClient() {
                     'transition-all duration-150 min-h-[44px]',
                     errors.password && 'border-blocker focus:ring-blocker/20 focus:border-blocker'
                   )}
+                  aria-invalid={!!errors.password}
+                  aria-describedby={errors.password ? 'signup-password-error' : undefined}
                 />
                 <button
                   type="button"
@@ -168,13 +216,17 @@ export default function LoginClient() {
                   onClick={() => setShowPassword((prev) => !prev)}
                   className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center text-ink-muted hover:text-ink hover:bg-surface-hover transition-colors focus:outline-none focus:ring-2 focus:ring-brand/20"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  aria-controls="login-password"
+                  aria-controls="signup-password"
                   aria-pressed={showPassword}
                 >
                   {showPassword ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
                 </button>
               </div>
-              {errors.password && <p id="login-password-error" role="alert" className="text-xs text-blocker mt-1">{errors.password.message}</p>}
+              {errors.password && (
+                <p id="signup-password-error" role="alert" className="text-xs text-blocker mt-1">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
 
             <motion.button
@@ -192,20 +244,20 @@ export default function LoginClient() {
               )}
             >
               {loading ? (
-                'Signing in…'
+                'Creating account…'
               ) : (
                 <>
-                  Sign in
-                  <ArrowRight size={16} />
+                  Create account
+                  <ArrowRight size={16} aria-hidden="true" />
                 </>
               )}
             </motion.button>
           </form>
 
           <p className="text-sm text-ink-muted text-center mt-6">
-            Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-brand font-semibold hover:underline">
-              Sign up
+            Already have an account?{' '}
+            <Link href="/login" className="text-brand font-semibold hover:underline">
+              Sign in
             </Link>
           </p>
         </motion.div>
