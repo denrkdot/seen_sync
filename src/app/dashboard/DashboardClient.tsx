@@ -14,6 +14,7 @@ import type { ApiResponse } from '@/types/api';
 import type { IUserTeam } from '@/types/team';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
+import { FallingEmojis } from '@/components/shared/FallingEmojis';
 
 const fetcher = (url: string) =>
   fetch(url).then(r => r.json()) as Promise<ApiResponse<IUserTeam[]>>;
@@ -33,9 +34,6 @@ export default function DashboardPage() {
   }, [searchParams]);
 
   const teams = data?.success ? data.data : [];
-
-  const totalStandupsToday = teams.reduce((acc, t) => acc + (t.stats?.todayStandupsCount ?? 0), 0);
-  const totalBlockersToday = teams.reduce((acc, t) => acc + (t.stats?.activeBlockersCount ?? 0), 0);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -111,6 +109,9 @@ export default function DashboardPage() {
           transition={{ duration: 0.3, ease: 'easeOut' }}
           className="relative bg-white rounded-3xl p-6 md:p-8 border border-surface-border shadow-sm overflow-hidden noise mb-8"
         >
+          {/* Falling Emojis Background */}
+          <FallingEmojis />
+
           <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div className="space-y-3 text-left">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-light border border-brand-subtle text-brand text-xs font-semibold select-none">
@@ -127,34 +128,6 @@ export default function DashboardPage() {
               <div className="pt-2">
                 <JoinCreateDialog defaultMemberName={profileName ?? undefined} />
               </div>
-            </div>
-            
-            {/* Stats Summary Strip */}
-            <div className="flex flex-wrap items-center gap-6 border-t lg:border-t-0 lg:border-l border-surface-border pt-4 lg:pt-0 lg:pl-8">
-              <div className="space-y-1 text-left min-w-[80px]">
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-ink-muted block">
-                  Workspaces
-                </span>
-                <span className="text-2xl font-extrabold text-ink">{teams.length}</span>
-              </div>
-              <div className="space-y-1 text-left min-w-[80px]">
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-ink-muted block">
-                  Standups
-                </span>
-                <span className="text-2xl font-extrabold text-brand">
-                  {totalStandupsToday}
-                </span>
-              </div>
-              {totalBlockersToday > 0 && (
-                <div className="space-y-1 text-left min-w-[80px]">
-                  <span className="text-[10px] font-semibold uppercase tracking-widest text-ink-muted block animate-pulse text-blocker">
-                    Blockers
-                  </span>
-                  <span className="text-2xl font-extrabold text-blocker">
-                    {totalBlockersToday}
-                  </span>
-                </div>
-              )}
             </div>
           </div>
         </motion.div>
