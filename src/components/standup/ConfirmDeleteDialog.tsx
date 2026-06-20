@@ -65,8 +65,8 @@ export function ConfirmDeleteDialog({
         )}
       >
         <AlertDialogHeader>
-          <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-blocker-light mb-3">
-            <Trash2 size={18} className="text-blocker" aria-hidden="true" />
+          <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-red-50 mb-3">
+            <Trash2 size={18} className="text-red-800" aria-hidden="true" />
           </div>
           <AlertDialogTitle className="text-base font-semibold tracking-tight text-ink">
             Delete your entry?
@@ -94,10 +94,10 @@ export function ConfirmDeleteDialog({
             onClick={handleDelete}
             disabled={isDeleting}
             className={cn(
-              'bg-blocker hover:bg-red-600 text-white',
+              'bg-red-800 hover:bg-red-900 text-white',
               'px-4 py-2 rounded-xl text-sm font-semibold',
               'transition-colors duration-150 min-h-[40px]',
-              'focus-visible:ring-2 focus-visible:ring-blocker focus-visible:ring-offset-2',
+              'focus-visible:ring-2 focus-visible:ring-red-800 focus-visible:ring-offset-2',
               'disabled:opacity-50 disabled:cursor-not-allowed'
             )}
           >

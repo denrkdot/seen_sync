@@ -96,9 +96,9 @@ export function StandupMenu({ onEdit, onDelete }: StandupMenuProps) {
               onClick={() => { setOpen(false); onDelete(); }}
               className={cn(
                 'w-full flex items-center gap-2.5 px-3.5 py-2.5',
-                'text-sm text-blocker font-medium text-left',
-                'hover:bg-blocker-light transition-colors duration-100',
-                'focus-visible:outline-none focus-visible:bg-blocker-light'
+                'text-sm text-red-800 font-medium text-left',
+                'hover:bg-red-50/80 transition-colors duration-100',
+                'focus-visible:outline-none focus-visible:bg-red-50/80'
               )}
             >
               <Trash2 size={13} className="shrink-0" aria-hidden="true" />

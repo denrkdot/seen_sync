@@ -1,17 +1,16 @@
 'use client';
 import { useParams } from 'next/navigation';
-import { AlertTriangle } from 'lucide-react';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { MoodBadge } from '@/components/standup/MoodBadge';
-import { RelativeTime } from '@/components/shared/RelativeTime';
 import { Skeleton } from '@/components/ui/skeleton';
+import { BlockerCard } from '@/components/standup/BlockerCard';
 import { useBlockers } from '@/hooks/useBlockers';
-import { cn } from '@/lib/utils';
+import { useTeamMember } from '@/hooks/useTeamMember';
 
 export default function BlockersPage() {
   const params = useParams();
   const code = typeof params.code === 'string' ? params.code.toUpperCase() : '';
   const { blockers, isLoading, error } = useBlockers(code);
+  const { member } = useTeamMember(code);
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-6 pb-safe">
@@ -48,27 +47,11 @@ export default function BlockersPage() {
       {!isLoading && blockers.length > 0 && (
         <div className="space-y-4">
           {blockers.map(blocker => (
-            <article
+            <BlockerCard
               key={blocker.id}
-              className="bg-white rounded-2xl p-5 border border-blocker-border shadow-sm border-l-4 border-l-blocker"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <span className={cn(
-                    'inline-flex items-center gap-1 px-2 py-0.5',
-                    'bg-blocker-light text-blocker text-xs font-semibold',
-                    'rounded-full border border-blocker-border uppercase tracking-wide'
-                  )}>
-                    <AlertTriangle size={10} aria-hidden="true" />
-                    Blocker
-                  </span>
-                  <MoodBadge mood={blocker.mood} />
-                  <span className="text-sm font-semibold text-ink">{blocker.member_name}</span>
-                </div>
-                <RelativeTime date={blocker.created_at} />
-              </div>
-              <p className="text-sm text-ink-soft leading-relaxed">{blocker.blocker}</p>
-            </article>
+              blocker={blocker}
+              currentMemberId={member?.id}
+            />
           ))}
         </div>
       )}
