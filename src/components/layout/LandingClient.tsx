@@ -16,7 +16,11 @@ import {
   HelpCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { MOOD_OPTIONS, MOOD_TINTS, getMoodLabel } from '@/lib/constants';
+import { MOOD_OPTIONS, getMoodLabel } from '@/lib/constants';
+import { StandupCard } from '@/components/standup/StandupCard';
+import { PendingCard } from '@/components/standup/PendingCard';
+import { BlockerCard } from '@/components/standup/BlockerCard';
+import type { IStandup } from '@/types/standup';
 
 interface MockStandup {
   id: string;
@@ -28,6 +32,20 @@ interface MockStandup {
   blocker?: string;
   createdAt: Date;
 }
+
+// Helper to map MockStandup to IStandup for standard components
+const mapToIStandup = (s: MockStandup): IStandup => ({
+  id: s.id,
+  team_id: 'mock-team',
+  member_id: s.id === 'visitor-standup' ? 'david-id' : s.id,
+  member_name: s.memberName,
+  mood: s.mood || null,
+  finished: s.finished,
+  today: s.today,
+  blocker: s.blocker || null,
+  date: '2026-06-20',
+  created_at: s.createdAt.toISOString(),
+});
 
 export function LandingClient() {
   // Tab states for the mock board
@@ -66,6 +84,14 @@ export function LandingClient() {
   ]);
 
   const [hasCheckedIn, setHasCheckedIn] = useState(false);
+
+  const handlePendingClick = () => {
+    const inputEl = document.getElementById('mock-name');
+    if (inputEl) {
+      inputEl.focus();
+      inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
 
   const handleMockSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -300,9 +326,6 @@ export function LandingClient() {
                       );
                     })}
                   </nav>
-                  <span className="text-[10px] text-ink-faint font-semibold uppercase tracking-wider">
-                    菲律宾时间 (PHT)
-                  </span>
                 </div>
 
                 {/* Tabs display */}
@@ -317,99 +340,39 @@ export function LandingClient() {
                         transition={{ duration: 0.15 }}
                         className="space-y-3"
                       >
-                        {standups.map((s) => {
-                          const moodTint = s.mood
-                            ? (MOOD_TINTS[s.mood] ?? 'border-l-surface-border')
-                            : 'border-l-surface-border';
-
-                          return (
-                            <motion.article
-                              key={s.id}
-                              layoutId={s.id}
-                              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                              animate={{ opacity: 1, scale: 1, y: 0 }}
-                              className={cn(
-                                'bg-white rounded-2xl p-4 border border-surface-border',
-                                'shadow-sm border-l-4 text-left relative overflow-hidden',
-                                moodTint
-                              )}
-                            >
-                              <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-1.5 min-w-0">
-                                  {s.mood && <span className="text-base select-none">{s.mood}</span>}
-                                  <span className="text-sm font-semibold text-ink truncate">
-                                    {s.memberName}
-                                  </span>
-                                </div>
-                                <span className="text-[10px] text-ink-muted font-medium">
-                                  {s.id === 'visitor-standup' ? 'just now' : 'today'}
-                                </span>
-                              </div>
-                              <div className="space-y-2 text-xs">
-                                <div>
-                                  <span className="font-semibold text-ink-muted uppercase tracking-widest text-[9px] block">
-                                    Finished
-                                  </span>
-                                  <p className="text-ink-soft leading-relaxed">{s.finished}</p>
-                                </div>
-                                <div>
-                                  <span className="font-semibold text-ink-muted uppercase tracking-widest text-[9px] block">
-                                    Today
-                                  </span>
-                                  <p className="text-ink-soft leading-relaxed">{s.today}</p>
-                                </div>
-                                {s.blocker && (
-                                  <div className="pt-1.5 border-t border-blocker-border">
-                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 bg-blocker-light text-blocker text-[9px] font-bold rounded-full border border-blocker-border uppercase tracking-wider">
-                                      <AlertTriangle size={8} />
-                                      Blocker
-                                    </span>
-                                    <p className="text-blocker mt-0.5 leading-relaxed">{s.blocker}</p>
-                                  </div>
-                                )}
-                              </div>
-                            </motion.article>
-                          );
-                        })}
+                        {standups.map((s) => (
+                          <motion.div
+                            key={s.id}
+                            layoutId={s.id}
+                            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                          >
+                            <StandupCard
+                              standup={mapToIStandup(s)}
+                              currentMemberId="david-id"
+                            />
+                          </motion.div>
+                        ))}
 
                         {/* If visitor has not checked in, show David's pending card */}
                         {!hasCheckedIn && (
-                          <motion.article
+                          <motion.div
                             key="pending-david"
                             layoutId="pending-david"
-                            className="w-full text-left bg-white/70 backdrop-blur-[2px] border border-surface-border rounded-2xl p-4 min-h-[120px] flex flex-col justify-between relative overflow-hidden group"
+                            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
                           >
-                            <span className="absolute -right-3 -bottom-8 text-[90px] font-black text-zinc-100 select-none pointer-events-none leading-none font-sans" aria-hidden="true">
-                              D
-                            </span>
-                            <div className="flex items-start justify-between relative z-10 w-full">
-                              <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-xl bg-zinc-100 border border-zinc-200/60 text-zinc-500 flex items-center justify-center font-bold text-xs">
-                                  D
-                                </div>
-                                <div>
-                                  <p className="text-xs font-semibold text-ink">David</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1 px-2 py-0.5 rounded-md border border-amber-100 bg-amber-50/50 text-amber-700 text-[9px] font-bold uppercase tracking-wider">
-                                <span className="relative flex h-1 w-1">
-                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                                  <span className="relative inline-flex rounded-full h-1 w-1 bg-amber-500" />
-                                </span>
-                                Pending
-                              </div>
-                            </div>
-                            <div className="relative z-10 w-full mt-3">
-                              <div className="space-y-1">
-                                <div className="h-1 w-1/2 bg-zinc-200/60 rounded" />
-                                <div className="h-1 w-1/3 bg-zinc-200/40 rounded" />
-                              </div>
-                              <p className="text-[10px] text-ink-muted flex items-center gap-1 pt-2">
-                                <Clock size={10} className="text-ink-faint" />
-                                Hasn&apos;t checked in yet today
-                              </p>
-                            </div>
-                          </motion.article>
+                            <PendingCard
+                              member={{
+                                id: 'david-id',
+                                team_id: 'mock-team',
+                                name: 'David',
+                                joined_at: new Date().toISOString(),
+                              }}
+                              currentMemberId="david-id"
+                              onCheckIn={handlePendingClick}
+                            />
+                          </motion.div>
                         )}
                       </motion.div>
                     )}
@@ -436,18 +399,11 @@ export function LandingClient() {
                                 key={`blocker-${s.id}`}
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                className="bg-blocker-light/60 border border-blocker-border rounded-2xl p-4 text-left"
                               >
-                                <div className="flex items-center justify-between mb-2">
-                                  <span className="text-xs font-semibold text-ink">{s.memberName}</span>
-                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 bg-blocker-light text-blocker text-[9px] font-bold rounded-full border border-blocker-border uppercase tracking-wider">
-                                    <AlertTriangle size={8} />
-                                    Blocker
-                                  </span>
-                                </div>
-                                <p className="text-xs text-blocker leading-relaxed font-medium">
-                                  {s.blocker}
-                                </p>
+                                <BlockerCard
+                                  blocker={mapToIStandup(s)}
+                                  currentMemberId="david-id"
+                                />
                               </motion.div>
                             ))
                         )}
@@ -743,7 +699,7 @@ export function LandingClient() {
                 </div>
                 <h3 className="text-base font-semibold text-ink">Grounded in Team Time</h3>
                 <p className="text-xs text-ink-soft leading-relaxed">
-                  Automatic timezone detection aligned with Philippine Time (PHT, UTC+8) or local team scope. Daily boards reset clearly at midnight.
+                  Automatic timezone detection aligned with Philippine Time (UTC+8) or local team scope. Daily boards reset clearly at midnight.
                 </p>
               </div>
 
