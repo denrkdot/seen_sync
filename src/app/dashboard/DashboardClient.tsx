@@ -12,6 +12,8 @@ import { LoadingGrid } from '@/components/shared/LoadingGrid';
 import { useAuth } from '@/hooks/useAuth';
 import type { ApiResponse } from '@/types/api';
 import type { IUserTeam } from '@/types/team';
+import { motion, useReducedMotion } from 'framer-motion';
+import { Sparkles } from 'lucide-react';
 
 const fetcher = (url: string) =>
   fetch(url).then(r => r.json()) as Promise<ApiResponse<IUserTeam[]>>;
@@ -32,21 +34,132 @@ export default function DashboardPage() {
 
   const teams = data?.success ? data.data : [];
 
+  const totalStandupsToday = teams.reduce((acc, t) => acc + (t.stats?.todayStandupsCount ?? 0), 0);
+  const totalBlockersToday = teams.reduce((acc, t) => acc + (t.stats?.activeBlockersCount ?? 0), 0);
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  };
+  const greeting = getGreeting();
+
+  const prefersReduced = useReducedMotion();
+
+  // Animation variants
+  const containerVariants = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: 0.05,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 15 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.25, ease: 'easeOut' },
+    },
+  };
+
+  const container = prefersReduced ? {} : containerVariants;
+  const item = prefersReduced ? {} : itemVariants;
+
   return (
-    <div className="min-h-screen bg-surface-subtle">
+    <div className="relative min-h-screen overflow-hidden bg-surface-subtle dot-grid">
+      {/* Drifting blurred brand color blobs in the background */}
+      {!prefersReduced && (
+        <>
+          <motion.div
+            animate={{
+              x: [0, 20, -10, 0],
+              y: [0, -15, 15, 0],
+            }}
+            transition={{
+              duration: 10,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+            className="absolute top-10 left-10 w-72 h-72 rounded-full bg-brand-light/30 blur-3xl -z-10 pointer-events-none"
+          />
+          <motion.div
+            animate={{
+              x: [0, -15, 20, 0],
+              y: [0, 20, -15, 0],
+            }}
+            transition={{
+              duration: 12,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+            className="absolute bottom-20 right-10 w-96 h-96 rounded-full bg-purple-100/40 blur-3xl -z-10 pointer-events-none"
+          />
+        </>
+      )}
+
       <Header />
 
       <PageWrapper>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight text-ink">Your teams</h1>
-            <p className="text-sm text-ink-muted mt-1">
-              {profileName ? `Welcome back, ${profileName}.` : 'Pick a team to check in.'}
-            </p>
+        {/* Welcome Hero Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+          className="relative bg-white rounded-3xl p-6 md:p-8 border border-surface-border shadow-sm overflow-hidden noise mb-8"
+        >
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="space-y-3 text-left">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-light border border-brand-subtle text-brand text-xs font-semibold select-none">
+                <Sparkles size={12} className="text-brand animate-pulse" />
+                Dashboard
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-black text-ink tracking-tight leading-[1.1]">
+                {greeting}, {profileName || 'User'}!
+              </h1>
+              <p className="text-sm text-ink-soft max-w-xl">
+                Here&apos;s how your teams are tracking today. Scroll through your workspaces or join a new one.
+              </p>
+              
+              <div className="pt-2">
+                <JoinCreateDialog defaultMemberName={profileName ?? undefined} />
+              </div>
+            </div>
+            
+            {/* Stats Summary Strip */}
+            <div className="flex flex-wrap items-center gap-6 border-t lg:border-t-0 lg:border-l border-surface-border pt-4 lg:pt-0 lg:pl-8">
+              <div className="space-y-1 text-left min-w-[80px]">
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-ink-muted block">
+                  Workspaces
+                </span>
+                <span className="text-2xl font-extrabold text-ink">{teams.length}</span>
+              </div>
+              <div className="space-y-1 text-left min-w-[80px]">
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-ink-muted block">
+                  Standups
+                </span>
+                <span className="text-2xl font-extrabold text-brand">
+                  {totalStandupsToday}
+                </span>
+              </div>
+              {totalBlockersToday > 0 && (
+                <div className="space-y-1 text-left min-w-[80px]">
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-ink-muted block animate-pulse text-blocker">
+                    Blockers
+                  </span>
+                  <span className="text-2xl font-extrabold text-blocker">
+                    {totalBlockersToday}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
-          <JoinCreateDialog defaultMemberName={profileName ?? undefined} />
-        </div>
+        </motion.div>
 
+        {/* Content States */}
         {isLoading && <LoadingGrid />}
         {error && !isLoading && (
           <EmptyState message="Couldn't load your teams." subMessage="Please try again." />
@@ -58,11 +171,18 @@ export default function DashboardPage() {
           />
         )}
         {!isLoading && teams.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <motion.div
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
             {teams.map(userTeam => (
-              <TeamCard key={userTeam.team.id} userTeam={userTeam} />
+              <motion.div key={userTeam.team.id} variants={item}>
+                <TeamCard userTeam={userTeam} />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </PageWrapper>
     </div>

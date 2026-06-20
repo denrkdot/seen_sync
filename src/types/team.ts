@@ -19,9 +19,17 @@ export interface IProfile {
   created_at: string;
 }
 
+export interface ITeamStats {
+  memberCount: number;
+  todayStandupsCount: number;
+  activeBlockersCount: number;
+  todayCheckedIn: { memberName: string; mood?: string | null }[];
+}
+
 export interface IUserTeam {
   team: ITeam;
   member: IMember;
+  stats?: ITeamStats;
 }
 
 export interface ITeamWithMembers extends ITeam {
